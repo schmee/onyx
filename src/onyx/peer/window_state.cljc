@@ -109,7 +109,11 @@
                                      defaulted-trigger-state (if (= :not-found trigger-state)
                                                                ((:init-state trigger-record) trigger)
                                                                trigger-state)
-                                     next-trigger-state ((:next-trigger-state trigger-record) trigger defaulted-trigger-state state-event)]
+                                     state-event-extent-states (assoc state-event 
+                                                                      :extent-states 
+                                                                      (delay (mapv (fn [extent] (st/get-extent state-store idx group-id extent))
+                                                                                     fire-extents)))
+                                     next-trigger-state ((:next-trigger-state trigger-record) trigger defaulted-trigger-state state-event-extent-states)]
                                  (st/put-trigger! state-store trigger-idx group-id next-trigger-state)                        
                                  next-trigger-state))
           state-event (assoc state-event :trigger-state next-trigger-state)]

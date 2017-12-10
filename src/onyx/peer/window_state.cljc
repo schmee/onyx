@@ -100,6 +100,10 @@
                           (assoc :trigger-record trigger-record))
           group-id (:group-id state-event)
           trigger-idx (:idx trigger-record)
+          fire-all? (or fire-all-extents? (not= (:event-type state-event) :new-segment))
+          fire-extents (if fire-all? 
+                         (all-extents incremental? window-extension state-store idx group-id)
+                         (:extents state-event))
           next-trigger-state (if state-context-trigger? 
                                (let [trigger-state (st/get-trigger state-store trigger-idx group-id)
                                      defaulted-trigger-state (if (= :not-found trigger-state)
@@ -108,10 +112,6 @@
                                      next-trigger-state ((:next-trigger-state trigger-record) trigger defaulted-trigger-state state-event)]
                                  (st/put-trigger! state-store trigger-idx group-id next-trigger-state)                        
                                  next-trigger-state))
-          fire-all? (or fire-all-extents? (not= (:event-type state-event) :new-segment))
-          fire-extents (if fire-all? 
-                         (all-extents incremental? window-extension state-store idx group-id)
-                         (:extents state-event))
           state-event (assoc state-event :trigger-state next-trigger-state)]
       (run! (fn [extent] 
               (let [[lower upper] (we/bounds window-extension extent)
